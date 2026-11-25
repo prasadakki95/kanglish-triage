@@ -27,6 +27,12 @@ SYSTEM_PROMPT = (
     '- "category": one of ["food_quality", "delivery_service", "ambience", "pricing", "ride_travel", "other"]\n'
     '- "urgency": one of ["low", "medium", "high"]\n'
     '- "english_summary": concise one-sentence English summary\n'
+    "Category rules: use \"food_quality\" for taste, freshness, or expired food (even in parcels or near stations); "
+    "use \"pricing\" for bills, cover charges, surge fares, discounts, or refunds (even at pubs or cabs); "
+    "use \"delivery_service\" for delivery speed, packaging, or wrong/missing items; "
+    "use \"ambience\" for venue vibe, seating, noise, Wi-Fi, or parking; "
+    "use \"ride_travel\" for cabs, autos, buses, trains, or tourist spots; "
+    "use \"other\" for app bugs, account/OTP issues, or customer support/staff behavior.\n"
     "Do not include any extra text or markdown."
 )
 

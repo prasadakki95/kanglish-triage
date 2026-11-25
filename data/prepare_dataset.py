@@ -222,6 +222,99 @@ TEMPLATES: list[tuple[str, str, str, str, str, str]] = [
         "negative", "other", "medium",
         "User is frustrated with the support bot and wants to connect to a human agent.", "blr",
     ),
+
+    # --- V2 CONTRASTIVE / ANTI-SHORTCUT EXAMPLES ---
+    # Food near transit hubs (must be food_quality, NOT ride_travel)
+    (
+        "{area} railway station pakka iruva hotel alli {food} {pos_adj}, must try {honorific}!",
+        "positive", "food_quality", "low",
+        "Customer loved the {food} at a restaurant near {area} railway station.", "nk",
+    ),
+    (
+        "{area} bus stand hatra tiffin center {food} okayish ide, aadre morning crowd tumba irutte.",
+        "neutral", "food_quality", "low",
+        "Customer found the {food} near {area} bus stand decent despite morning crowds.", "nk",
+    ),
+    (
+        "{area} metro station hatra cafe alli {food} tinde, {neg_food_issue} anstu.",
+        "negative", "food_quality", "medium",
+        "Customer disliked the {food} at a cafe near {area} metro station.", "blr",
+    ),
+    # Expired/spoiled food in parcels (must be food_quality, NOT delivery_service)
+    (
+        "{area} sweet shop parcel tagonde, box open madidre {food} expired ide! Immediate action tagoli.",
+        "negative", "food_quality", "high",
+        "Customer received expired {food} in a parcel from {area} and demands immediate action.", "nk",
+    ),
+    (
+        "Parcel alli {food} smell bartide, completely spoiled agide {honorific}.",
+        "negative", "food_quality", "high",
+        "Customer reported that the {food} in the parcel was spoiled.", "blr",
+    ),
+    # Pricing inside pubs/clubs/cabs/discounts (must be pricing, NOT ambience or ride_travel)
+    (
+        "{area} pub alli stag entry ge 2000 cover charge hakidare, robbery {honorific}!",
+        "negative", "pricing", "medium",
+        "Customer complained about an excessive 2000 rupee cover charge at a {area} pub.", "blr",
+    ),
+    (
+        "{area} to Airport cab fare 1500 torstu, surge pricing tumba crazy agide.",
+        "negative", "pricing", "medium",
+        "Customer complained about high surge pricing for a cab from {area} to the airport.", "blr",
+    ),
+    (
+        "App discount offer apply agilla bill mele, waiter keltre technical issue anta helidru.",
+        "negative", "pricing", "medium",
+        "Discount offer failed to apply to the bill and staff blamed a technical issue.", "blr",
+    ),
+    (
+        "{area} refund processed anta SMS bantu, aadre bank account alli innu duddu bandilla.",
+        "negative", "pricing", "high",
+        "Customer received an SMS saying the {area} refund was processed, but the money has not arrived.", "blr",
+    ),
+    # Mixed queue/seating/volume/charging (ambience vs food_quality vs ride_travel)
+    (
+        "{area} darshini {food} crispy {pos_adj}, aadre weekend alli 40 mins queue alli nillbeku.",
+        "mixed", "food_quality", "low",
+        "Customer loved the {food} in {area} despite a long weekend wait.", "blr",
+    ),
+    (
+        "{area} cafe vibes aesthetic ide, aadre weekend alli table sigode tumba kashta.",
+        "mixed", "ambience", "low",
+        "Customer liked the {area} cafe vibe but noted it is hard to get a table on weekends.", "blr",
+    ),
+    (
+        "{area} cafe coffee chennagide, but music volume kammi madidre calls madbohudu.",
+        "mixed", "ambience", "low",
+        "Customer liked the coffee in {area} but wished the music were quieter for calls.", "blr",
+    ),
+    (
+        "{area} overnight sleeper bus berth clean ittu, aadre charging point work aglilla.",
+        "mixed", "ride_travel", "low",
+        "Overnight sleeper bus to {area} had a clean berth, though the charging point failed.", "nk",
+    ),
+    # Delivery positives & gate drops
+    (
+        "{area} inda midnight {food} order madidvi, 20 mins alle bisi bisi bandide, full khush!",
+        "positive", "delivery_service", "low",
+        "Customer was happy that their midnight {food} order from {area} arrived hot in 20 minutes.", "blr",
+    ),
+    (
+        "Delivery agent gate hatra ittu hogidane, call kuda madlilla, parcel damage aytu!",
+        "negative", "delivery_service", "high",
+        "Delivery agent left the parcel at the gate without calling, resulting in damage.", "blr",
+    ),
+    # Staff / support behavior (other)
+    (
+        "Helpdesk ge 20 mins inda call madtidini, yaaru response kodta illa!",
+        "negative", "other", "high",
+        "Customer has been trying to reach the helpdesk for 20 minutes with no response.", "blr",
+    ),
+    (
+        "{area} branch alli staff behaviour rude ittu, query kelidre sariyagi reply madlilla.",
+        "negative", "other", "medium",
+        "Customer complained about rude staff behavior at the {area} branch.", "blr",
+    ),
 ]
 
 POS_ADJ_BLR = ["sakath agide", "chindi ide", "super agide", "tumba chennagide", "awesome ide"]
@@ -358,7 +451,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Prepare train/val/test Kanglish datasets.")
     parser.add_argument("--seed-file", type=Path, default=Path("data/seed_examples.jsonl"))
     parser.add_argument("--out-dir", type=Path, default=Path("data"))
-    parser.add_argument("--target-size", type=int, default=900)
+    parser.add_argument("--target-size", type=int, default=1200)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -383,6 +476,13 @@ def main() -> None:
     assert train_texts.isdisjoint(val_texts), "Leakage between train and val!"
     assert train_texts.isdisjoint(test_texts), "Leakage between train and test!"
     assert val_texts.isdisjoint(test_texts), "Leakage between val and test!"
+
+    ood_path = args.out_dir / "ood_test.jsonl"
+    if ood_path.exists():
+        ood_texts = {normalize_text(r["text"]) for r in load_jsonl(ood_path)}
+        assert train_texts.isdisjoint(ood_texts), "Leakage between train and ood_test!"
+        assert val_texts.isdisjoint(ood_texts), "Leakage between val and ood_test!"
+        assert test_texts.isdisjoint(ood_texts), "Leakage between test and ood_test!"
 
     save_jsonl(args.out_dir / "train.jsonl", train)
     save_jsonl(args.out_dir / "val.jsonl", val)

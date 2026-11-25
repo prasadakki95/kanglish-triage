@@ -15,12 +15,13 @@ from schema import extract_json_object, validate_prediction  # noqa: E402
 
 class TestKanglishEvalHarness(unittest.TestCase):
     def test_seed_dataset_validates(self) -> None:
-        seed_path = EVAL_DIR.parent / "data" / "seed_examples.jsonl"
-        records = load_jsonl(seed_path)
-        self.assertGreaterEqual(len(records), 20)
-        for rec in records:
-            ok, errs = validate_prediction(rec["label"])
-            self.assertTrue(ok, f"Seed {rec['id']} failed validation: {errs}")
+        for rel_path in ("data/seed_examples.jsonl", "data/ood_test.jsonl"):
+            path = EVAL_DIR.parent / rel_path
+            records = load_jsonl(path)
+            self.assertGreaterEqual(len(records), 20, f"{rel_path} too small")
+            for rec in records:
+                ok, errs = validate_prediction(rec["label"])
+                self.assertTrue(ok, f"{rel_path} {rec['id']} failed validation: {errs}")
 
     def test_extract_fenced_and_strict_json(self) -> None:
         raw_strict = '{"sentiment":"positive","category":"food_quality","urgency":"low","english_summary":"Great food."}'
