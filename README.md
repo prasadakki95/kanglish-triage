@@ -37,9 +37,11 @@ To test generalization beyond template-augmented data, we evaluated on 25 brand-
 - [eval/evaluate.py](eval/evaluate.py) — Reproducible evaluation harness (JSON validity, strict JSON rate, accuracy, macro-F1, failure inspection).
 - [eval/test_evaluate.py](eval/test_evaluate.py) — Unit tests for schema validation and the evaluation harness.
 - [notebooks/kanglish_triage_colab.ipynb](notebooks/kanglish_triage_colab.ipynb) — End-to-end Colab/Kaggle notebook for baselines, QLoRA training, and evaluation.
+- [app.py](app.py) & [requirements.txt](requirements.txt) — Interactive Gradio demo (ready for local run, Kaggle `GRADIO_SHARE=true`, or Hugging Face Spaces).
 
 ## Quick Start
 ```bash
 python -m unittest eval/test_evaluate.py -v
 python data/prepare_dataset.py --seed-file data/seed_examples.jsonl --out-dir data --target-size 1200
+KANGLISH_ADAPTER_ID="<your-hf-username>/qwen2.5-1.5b-kanglish-triage-lora" python app.py
 ```
